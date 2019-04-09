@@ -1,0 +1,6 @@
+open DEP,$ARGV[0],or die $!;
+while(<DEP>)
+{
+	chomp;
+	@a =split/\t/,$_;
+}

@@ -1,0 +1,1 @@
+python /public/home/hangjf/script/about_cnv/plot_CNV/plotcnv.py --cnr /public/home/hangjf/cancer-changhai/cnvkit1/data/N4/N4_C.cnr --prefix N4.TP53 --ref /public/home/hangjf/data/database/hg38/ALL.gene.exon_intron.txt1 --gene TP53 --color \#4DAF4A
