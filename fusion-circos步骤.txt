@@ -1,0 +1,61 @@
+﻿更新STAR	
+git clone https://github.com/alexdobin/STAR.git
+
+更新STAR-Fusion	
+git clone https://github.com/STAR-Fusion/STAR-Fusion.git
+make
+
+Fusion
+新建test_fusion.sh文件，输入STAR-Fusion的运行脚本
+export PATH=/public/home/hangjf/software/perl/bin:$PATH
+/public/Fixed/STAR-Fusion/STAR-Fusion --genome_lib_dir /public/home/hangjf/data/database/STAR/GRCh38_v27_CTAT_lib_Feb092018/ctat_genome_lib_build_dir --left_fq /public/home/hangjf/Project/shenmama_20190226/cancer_new_data/clean_data/WGS-1_HJNY3CCXY_L3_1.clean.fq --right_fq /public/home/hangjf/Project/shenmama_20190226/cancer_new_data/clean_data/WGS-1_HJNY3CCXY_L3_2.clean.fq --output_dir /public/home/hangjf/Project/shenmama_20190226/fusion_cancer_new --CPU 16
+结果得到
+star-fusion.fusion_predictions.abridged.tsv
+std.STAR.bam
+
+Cricos
+
+1.从star-fusion.fusion_predictions.abridged.tsv和std.STAR.bam挑出有fusion信息的reads，整合成fasta格式的文件
+-t star-fusion.fusion_predictions.abridged.tsv 
+-bam std.STAR.bam
+-s 随便写
+-o 自定义的存放结果的路径
+perl /public/home/hangjf/script/about_fusion/creat_all_fasta_bam_STAR_tsv.pl -t /public/home/xujh/Fusion_circos_test/fusion_result/star-fusion.fusion_predictions.abridged.tsv -bam /public/home/xujh/Fusion_circos_test/fusion_result/std.STAR.bam -s tttt -o /public/home/xujh/Fusion_circos_test/circos
+得到一个路径
+/public/home/xujh/Fusion_circos_test/circos
+这个路径下有各对fusion相关的reads组成的fasta文件，要在第4步中用到。
+
+2.先跑cnvkit
+--conf 配置文件cnvkit.conf
+要改以下几个东西
+prefix = 自定义的字符串
+process_path = 自定义路径 
+result_path = 自定义路径 
+cancer_bam = 实验组数据bam文件（肿瘤）
+normal_bam = 对照组数据bam文件（血液）
+如果只有一种样本，cancer_bam和normal_bam写成一样
+python /public/home/hangjf/test/cnvkit/script/run.py --conf /public/home/hangjf/Project/shenmama_20190226/cnvkit_cancer_new/cnvkit.conf
+perl /public/home/hangjf/script/about_fusion/circos/circos/deal_cnv_cns.pl /public/home/hangjf/Project/shenmama_20190226/cnvkit/shenmama_C.cns > /public/home/hangjf/Project/shenmama_20190226/cnvkit/shenmama_C.cns.txt
+结果得到
+xxx_C.cns.txt
+
+3.计算bam文件的测序深度
+samtools depth /public/home/hangjf/Project/HBV_201807/shenmama/cancer.sort.bam >depth.txt
+perl /public/home/hangjf/script/about_fusion/circos/deal_depth.pl  depth.txt > depth.circos.txt
+最后得到
+depth.circos.txt
+
+4.生成fusion的基因信息和位点
+4.1perl /public/home/hangjf/script/about_fusion/merge.fusion.fasta.pl  /public/home/xujh/Fusion_circos_test/circos（第一步用的-o）>merge.fasta
+4.2blat /public/home/hangjf/data/database/STAR/GRCh38_gencode_v26_CTAT_lib_July192017/ref_genome.fa merge.fasta(4.1) XXX.psl
+4.3python /public/home/hangjf/script/about_fusion/STAR_fusion_check/check_blat.py --psl XXX.psl(4.2) --fa merge.fasta(4.1) --out xxx.fusion.xls
+4.4python /public/home/hangjf/script/about_fusion/circos/deal_fusion.py --txt fusion.xls(4.3) --gout fusion.gene.txt --lout fusion.link.txt
+结果得到
+xxx.gene.txt
+xxx.link.txt
+
+5.把circos的每一圈的统计图需要的横坐标，纵坐标间隔，最大值；配色；圈的大小信息(大概5个*.conf)，拷贝到自己的目录下
+cp /public/Fixed/circos/example/*.conf
+修改circos.conf
+
+circos --conf circos.conf
